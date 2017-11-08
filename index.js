@@ -32,7 +32,9 @@ module.exports.s3 = function(config, key, args, callback) {
 			}
 
 			args.key = key;
-
+			if ( data.ContentType.indexOf('image/') === -1 ) {
+				return callback(new Error('return-original-file'), data);
+			}
 			return module.exports.resizeBuffer(data.Body, args, callback);
 		}
 	);

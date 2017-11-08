@@ -34,6 +34,18 @@ http.createServer( function( request, response ) {
 
 	return tachyon.s3( config, decodeURI( params.pathname.substr(1) ), params.query, function( err, data, info ) {
 		if ( err ) {
+			if (err.message === 'return-original-file') {
+				// Data contains the headers of the original file from S3
+				// We can remove some we don't need and send the file back to the client
+
+				// data.Body is a buffer of the file
+				var respBody = data.Body;
+				delete data.Body;
+				delete data.Metadata;
+				response.writeHead( 200, data);
+				response.write( respBody );
+				return response.end();
+			}
 			if ( debug ) {
 				console.error( Date(), err )
 			}
