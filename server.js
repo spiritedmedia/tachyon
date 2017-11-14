@@ -1,28 +1,31 @@
-var http   = require("http"),
-	url    = require("url"),
-	path   = require("path"),
-	fs     = require("fs"),
-	tachyon= require( './index' ),
-	args = process.argv.slice(2),
-	port   = Number( args[0] ) ? args[0] : 8080,
-	debug  = args.indexOf( '--debug' ) > -1
+var http    = require("http"),
+	url     = require("url"),
+	path    = require("path"),
+	fs      = require("fs"),
+	tachyon = require( './index' ),
+	args    = process.argv.slice(2),
+	port    = Number( args[0] ) ? args[0] : 8080,
+	debug   = args.indexOf( '--debug' ) > -1
 
-var config = {}
+/**
+ * Setup Config Options
+ */
+var config = {};
 if ( process.env.AWS_REGION && process.env.AWS_S3_BUCKET ) {
 	config = {
 		region: process.env.AWS_REGION,
 		bucket: process.env.AWS_S3_BUCKET,
 		endpoint: process.env.AWS_S3_ENDPOINT,
-	}
+	};
 } else if ( fs.existsSync( 'config.json' ) ) {
 	config = JSON.parse( fs.readFileSync( 'config.json' ) )
 }
 
-http.createServer( function( request, response ) {
-	var params = url.parse( request.url, true )
+var serverFunc = function( request, response ) {
+	var params = url.parse( request.url, true );
 
 	if ( debug ) {
-		console.log( Date(), request.url )
+		console.log( Date(), request.url );
 	}
 
 	// healthcheck file
@@ -32,9 +35,12 @@ http.createServer( function( request, response ) {
 		return response.end()
 	}
 
-	return tachyon.s3( config, decodeURI( params.pathname.substr(1) ), params.query, function( err, data, info ) {
+	var key = decodeURI( params.pathname.substr(1) );
+	var args = params.query;
+
+	return tachyon.s3( config, key, args, function( err, data, info ) {
 		if ( err ) {
-			if (err.message === 'return-original-file') {
+			if ( err.message === 'return-original-file' ) {
 				// Data contains the headers of the original file from S3
 				// We can remove some we don't need and send the file back to the client
 
@@ -54,7 +60,7 @@ http.createServer( function( request, response ) {
 			} )
 			response.write( err.message )
 			return response.end()
-		}
+		};
 		response.writeHead( 200, {
 			'Content-Type': 'image/' + info.format,
 			'Content-Length': info.size,
@@ -63,6 +69,7 @@ http.createServer( function( request, response ) {
 		response.write( data )
 		return response.end()
 	} );
-}).listen( parseInt( port, 10 ) )
+};
 
+http.createServer( serverFunc ).listen( parseInt( port, 10 ) );
 console.log( "Server running at\n	=> http://localhost:" + port + "/\nCTRL + C to shutdown" )

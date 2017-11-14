@@ -1,41 +1,47 @@
-var sharp = require('sharp'),
-	AWS = require('aws-sdk'),
-	path = require('path'),
-	isAnimated = require('animated-gif-detector');
-
-var regions = {};
+var sharp      = require('sharp'),
+	AWS        = require('aws-sdk'),
+	path       = require('path'),
+	isAnimated = require('animated-gif-detector'),
+	regions    = {};
 
 module.exports = {};
 
-module.exports.s3 = function(config, key, args, callback) {
+module.exports.s3 = function( config, key, args, callback ) {
 	AWS.config.region = config.region;
 
 	var s3config = {};
-	if (config.endpoint) {
+	if ( config.endpoint ) {
 		s3config.endpoint = config.endpoint;
 		s3config.s3ForcePathStyle = true;
 	}
 
-	if (!regions[config.region]) {
+	if ( ! regions[config.region] ) {
 		regions[config.region] = new AWS.S3(
-			Object.assign({ region: config.region }, s3config)
+			Object.assign({ region: config.region }, s3config )
 		);
 	}
 	var s3 = regions[config.region];
 
 	return s3.makeUnauthenticatedRequest(
 		'getObject',
-		{ Bucket: config.bucket, Key: key },
-		function(err, data) {
-			if (err) {
-				return callback(err);
+		{
+			Bucket: config.bucket,
+			Key: key
+		},
+		function( err, data ) {
+			if ( err ) {
+				return callback( err );
+			}
+
+			if ( ! data.ContentType ) {
+				return callback( new Error('return-original-file'), data );
 			}
 
 			args.key = key;
-			if ( data.ContentType.indexOf('image/') === -1 ) {
-				return callback(new Error('return-original-file'), data);
+			if ( data.ContentType.indexOf('image/') > -1 ) {
+				return module.exports.resizeBuffer( data.Body, args, callback );
 			}
-			return module.exports.resizeBuffer(data.Body, args, callback);
+			return callback( new Error('return-original-file'), data );
 		}
 	);
 };
