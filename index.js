@@ -39,14 +39,14 @@ module.exports.s3 = function( config, key, args, callback ) {
 
 			args.key = key;
 			if ( data.ContentType.indexOf('image/') > -1 && data.ContentType.indexOf('svg+xml') === -1 ) {
-				return module.exports.resizeBuffer( data.Body, args, callback );
+				return module.exports.resizeBuffer( data.Body, args, callback, data );
 			}
 			return callback( new Error('return-original-file'), data );
 		}
 	);
 };
 
-module.exports.resizeBuffer = function(buffer, args, callback) {
+module.exports.resizeBuffer = function(buffer, args, callback, data) {
 	return new Promise(function(resolve, reject) {
 		try {
 			var image = sharp(buffer).withMetadata();
@@ -69,7 +69,7 @@ module.exports.resizeBuffer = function(buffer, args, callback) {
 					path.extname(args.key).toLowerCase() === '.gif'
 				) {
 					if (isAnimated(buffer)) {
-						return callback(new Error('fallback-to-original'));
+						return callback( new Error('return-original-file'), data );
 					} else {
 						image.png();
 					}
