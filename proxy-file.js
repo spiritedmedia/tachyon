@@ -15,14 +15,36 @@ module.exports = function( region, bucket, key, callback ) {
 				return callback( err );
 			}
 
-			var isBase64Encoded = false;
-			if ( data.ContentType.indexOf('image/') > -1 ) {
-				isBase64Encoded = true;
+			var contentTypeParts = data.ContentType.split('/');
+			var frontPart = contentTypeParts[0];
+			var backPart = contentTypeParts[1];
+			var isBase64Encoded = true;
+			if ( frontPart == 'text' ) {
+				isBase64Encoded = false;
+			}
+			if ( frontPart == 'image' && backPart == 'svg+xml' ) {
+				isBase64Encoded = false;
+			}
+			if ( frontPart == 'application' ) {
+				switch( backPart ) {
+					case 'javascript':
+					case 'json':
+					case 'atom+xml':
+					case 'ld+json':
+					case 'rss+xml':
+					case 'vnd.geo+json':
+					case 'xml':
+					case 'rtf':
+					case 'xhtml+xml':
+					case 'xslt+xml':
+						isBase64Encoded = false;
+						break;
+				}
 			}
 
 			var encoding = '';
 			if ( isBase64Encoded ) {
-				encoding = 'base64'
+				encoding = 'base64';
 			}
 			var resp = {
 				statusCode: 200,
