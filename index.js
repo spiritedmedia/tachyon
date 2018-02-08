@@ -38,7 +38,10 @@ module.exports.s3 = function( config, key, args, callback ) {
 			}
 
 			args.key = key;
-			if ( data.ContentType.indexOf('image/') > -1 && data.ContentType.indexOf('svg+xml') === -1 ) {
+			if (
+				data.ContentType.indexOf('image/') > -1
+				&& data.ContentType.indexOf('svg+xml') === -1
+			) {
 				return module.exports.resizeBuffer( data.Body, args, callback, data );
 			}
 			return callback( new Error('return-original-file'), data );
