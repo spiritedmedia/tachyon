@@ -1,11 +1,12 @@
-var http    = require("http"),
-	url     = require("url"),
-	path    = require("path"),
-	fs      = require("fs"),
-	tachyon = require( './index' ),
-	args    = process.argv.slice(2),
-	port    = Number( args[0] ) ? args[0] : 8080,
-	debug   = args.indexOf( '--debug' ) > -1
+var http      = require("http"),
+	url       = require("url"),
+	path      = require("path"),
+	fs        = require("fs"),
+	tachyon   = require( './index' ),
+	proxyFile = require('./proxy-file');
+	args      = process.argv.slice(2),
+	port      = Number( args[0] ) ? args[0] : 8080,
+	debug     = args.indexOf( '--debug' ) > -1
 
 /**
  * Setup Config Options
